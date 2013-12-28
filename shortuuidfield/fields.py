@@ -1,4 +1,6 @@
+import uuid
 import shortuuid
+
 from django.db.models import CharField
 
 
@@ -39,8 +41,37 @@ class ShortUUIDField(CharField):
             return None
         return super(ShortUUIDField, self).formfield(**kwargs)
 
+
+class PrefixShortUUIDField(CharField):
+    """
+    ShortUUIDField with cerntain prefix
+    """
+
+    def __init__(self, auto=True, prefix_str='uu-', *args, **kwargs):
+        self.auto = auto
+        self.prefix_str = prefix_str
+        kwargs['max_length'] = len(prefix_str) + 8
+        if auto:
+            kwargs['editable'] = False
+            kwargs['blank'] = True
+        super(PrefixShortUUIDField, self).__init__(*args, **kwargs)
+
+    def pre_save(self, model_instance, add):
+        value = super(PrefixShortUUIDField, self).pre_save(model_instance, add)
+        if self.auto and not value:
+            value = "%s%s" % (self.prefix_str, str(shortuuid.encode(uuid.uuid4()))[:8])
+            setattr(model_instance, self.attname, value)
+        return value
+
+    def formfield(self, **kwargs):
+        if self.auto:
+            return None
+        return super(PrefixShortUUIDField, self).formfield(**kwargs)
+
+
 try:
     from south.modelsinspector import add_introspection_rules
     add_introspection_rules([], [r"^shortuuidfield\.fields\.ShortUUIDField"])
+    add_introspection_rules([], [r"^prefixshortuuidfield\.fields\.PrefixShortUUIDField"])
 except ImportError:
     pass

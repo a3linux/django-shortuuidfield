@@ -3,5 +3,5 @@ try:
         .get_distribution('django-shortuuidfield').version
 except Exception, e:
     VERSION = 'unknown'
-    
-from fields import ShortUUIDField
+
+from fields import ShortUUIDField, PrefixShortUUIDField
